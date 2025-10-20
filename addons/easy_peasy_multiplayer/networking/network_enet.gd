@@ -1,14 +1,13 @@
 class_name NetworkEnet
-extends Node
+extends NetworkType
 
 ## The port number to use for Enet servers
 const DEFAULT_PORT = 7000
 
-## The [MultiplayerPeer] for the Enet server. We can define this on initialization because this script should only run if we are going to be networking using ENet
-var peer : ENetMultiplayerPeer = ENetMultiplayerPeer.new()
+func _ready() -> void:
+	peer = ENetMultiplayerPeer.new()
 
 #region Network-Specific Functions
-## Creates a game server as the host. See [Network.become_host] for more information
 func become_host(connection_info : Dictionary = { "port" : DEFAULT_PORT }):
 	var error = peer.create_server(connection_info.port, Network.room_size)
 	if error:
@@ -26,9 +25,13 @@ func become_host(connection_info : Dictionary = { "port" : DEFAULT_PORT }):
 	if Network._is_verbose:
 		print("ENet Server hosted on port %d" % connection_info.port)
 
-## Joins a game using an id in [Network]. See [Network.join_as_client] for more information
-func join_as_client():
-	var ip = Network.ip_address
+func join_as_client(connector_local = null):
+	if connector_local:
+		connector = connector_local
+
+	if not connector: return
+
+	var ip = connector
 	var port = DEFAULT_PORT
 
 	# Check if the ip_address contains a port (e.g., "192.168.1.1:8080")
@@ -51,7 +54,6 @@ func join_as_client():
 	if Network._is_verbose:
 		print("ENet client connecting to %s:%d" % [ip, port])
 
-## This does nothing as Enet does not have a lobby implementation. It is only here to prevent errors.
 func list_lobbies():
 	pass
 #endregion

@@ -20,7 +20,7 @@ var active_network_type : MultiplayerNetworkType = MultiplayerNetworkType.DISABL
 		network_type_changed.emit(active_network_type)
 
 ## The physical node for the active network, which is what makes using multiple networks so easy
-var active_network : Node
+var active_network : NetworkType
 
 # General Variables
 ## The player info that the local client will send to other clients on connection to a server

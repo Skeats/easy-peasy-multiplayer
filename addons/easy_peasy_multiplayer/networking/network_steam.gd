@@ -1,30 +1,31 @@
 class_name NetworkSteam
-extends Node
+extends NetworkType
 
 ## This is a network module for connecting to lobbies using Steam. It utilizes GodotSteam lobbies and SteamMultiplayerPeer for interfacing with the MultiplayerAPI
 
 ## I have no idea what this does I won't lie
 const PACKET_READ_LIMIT: int = 32
 
-## The [MultiplayerPeer] for the Steam server. We can define this on initialization because this script should only run if we are going to be networking using Steam
-var peer : SteamMultiplayerPeer = SteamMultiplayerPeer.new()
-
 func _ready() -> void:
+	peer = SteamMultiplayerPeer.new()
+
 	Steam.lobby_created.connect(_on_lobby_created)
 	Steam.lobby_joined.connect(_on_lobby_joined)
 	#Steam.join_requested.connect(_on_lobby_join_requested) # I don't remember what this was for...
 	Steam.lobby_match_list.connect(_on_lobby_match_list)
 
 #region Main Network Function
-
-## Creates a game server as the host. Passing in a lobby type to [param lobby_type] allows you to change the lobby visibility
 func become_host(connection_info : Dictionary = { "steam_lobby_type" : Steam.LobbyType.LOBBY_TYPE_PUBLIC }):
 	if Network.steam_lobby_id == 0: # Prevents you from creating a lobby if you are currently connected to a different lobby
 		Steam.createLobby(connection_info.steam_lobby_type, Network.room_size)
 
-## Joins a game server using the lobby id in [Network.steam_lobby_id]
-func join_as_client():
-	Steam.joinLobby(Network.steam_lobby_id)
+func join_as_client(connector_local = null):
+	if connector_local:
+		connector = connector_local
+
+	if not connector: return
+
+	Steam.joinLobby(connector)
 
 ## Lists lobbies using the Steam.addRequestLobby... functions. Call any of these filters before calling this function to refine the lobby search
 func list_lobbies():
