@@ -1,7 +1,7 @@
 extends Node
 
 # These signals can be connected to by a UI lobby scene or the game scene.
-signal network_type_changed(network_type) ## Emitted when the [Network.active_network_type] is changed
+signal network_changed(network: NetworkType) ## Emitted when the [Network.active_network] is changed
 signal player_connected(peer_id, player_info) ## Emitted when a new player connects to the local client
 signal player_disconnected(peer_id) ## Emitted when a player disconnects from the local client
 signal server_disconnected ## Emitted when the client is forcefully disconnected from the server
@@ -9,6 +9,7 @@ signal connection_fail ## Emitted when the local client fails to connect to the 
 signal player_ready ## Emitted when a player has readied or unreadied
 signal server_started ## Emitted when the server has been created
 signal lobbies_fetched(lobbies) ## Emitted when [Network.list_lobbies] has a response
+signal host_closed ## Emitted on the host when it closes the server
 
 ## The physical node for the active network, which is what makes using multiple networks so easy
 var active_network : NetworkType
@@ -103,6 +104,7 @@ func set_network_type(new_network_type: Object = NetworkDisabled) -> NetworkType
 		active_network.queue_free()
 	active_network = new_network_type.new()
 	add_child(active_network, true)
+	network_changed.emit(active_network)
 	return active_network
 
 ## Disconnects the current peer from any connected servers. A [enum Network.MultiplayerNetworkType] can optionally be passed to set the network type to use after disconnecting, which can be useful for instances like going back to the lobby browser after leaving a server.
@@ -110,6 +112,9 @@ func disconnect_from_server(network_type: Object = NetworkDisabled):
 	# This expression may not be necessary
 	if active_network is NetworkSteam and active_network.connector != 0:
 		Steam.leaveLobby(active_network.connector)
+
+	if is_host:
+		host_closed.emit()
 
 	multiplayer.multiplayer_peer = null
 	connected_players.clear()

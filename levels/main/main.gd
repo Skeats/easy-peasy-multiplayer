@@ -10,6 +10,7 @@ const PLAYER = preload("res://prefabs/player/player.tscn")
 func _ready() -> void:
 	Network.player_connected.connect(_on_player_connected)
 	Network.player_disconnected.connect(_on_player_disconnected)
+	Network.host_closed.connect(_on_host_closed)
 
 	player_spawner.spawn_function = spawn_player
 
@@ -32,3 +33,8 @@ func _on_player_connected(player_id: int, _player_info: Dictionary) -> void:
 func _on_player_disconnected(player_id: int) -> void:
 	if multiplayer.is_server():
 		remove_player(player_id)
+
+func _on_host_closed() -> void:
+	for player in get_tree().get_nodes_in_group("Players"):
+		if player.name.to_int() != 1:
+			player.queue_free()

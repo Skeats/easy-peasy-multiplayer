@@ -9,7 +9,7 @@ const PACKET_READ_LIMIT: int = 32
 static var lobby_id: int = 0
 
 static var lobby_data: Dictionary = {
-	"name": "MOVEMENTSHOOTER_TEST_LOBBY",
+	"name": "Easy Peasy Multiplayer Game",
 	"game": "DEFAULTSCENE"
 }
 
