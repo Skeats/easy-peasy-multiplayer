@@ -11,7 +11,7 @@ var app_owner: int = 0
 var steam_id: int = 0
 var steam_username: String = ""
 
-## DEPRECATED
+## @deprecated: use GodotSteam's app_id property in [ProjectSettings]
 var steam_app_id: int = 480
 
 # User authentication variables [NOT IN USE]

@@ -75,13 +75,7 @@ func _ready():
 		var desktop_path := OS.get_system_dir(OS.SYSTEM_DIR_DESKTOP).replace("\\", "/").split("/")
 		player_info["name"] = desktop_path[desktop_path.size() - 2]
 
-	# This is specifically for interfacing with my custom dev tools, which can be found here: https://godotengine.org/asset-library/asset/4028)
-	#DevTools.create_command("set_network", dev_set_network, "Sets the network type. Call without arguments to list available networks")
-	#DevTools.create_command("host_lobby", dev_host_lobby, "Hosts a lobby using the current adtive network")
-	#DevTools.create_command("connect", dev_join_lobby, "Connects to the given lobby")
-	#DevTools.create_command("disconnect", dev_disconnect, "Disconnnects from the current lobby")
-
-## These are designed for my dev tools, but they should be usable in code and in other console plugins, you just might need to adjust the arguments.
+# These are designed to be easy functions to throw into a console plugin of your choice
 #region Dev Commands
 ## Sets the current network
 func dev_set_network(network: String):
@@ -111,7 +105,7 @@ func dev_join_lobby(connector: String):
 		steam_lobby_id = connector.to_int()
 	else:
 		if connector:
-			ip_address =connector
+			ip_address = connector
 
 	join_as_client()
 

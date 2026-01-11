@@ -11,10 +11,11 @@ func _ready() -> void:
 
 	Steam.lobby_created.connect(_on_lobby_created)
 	Steam.lobby_joined.connect(_on_lobby_joined)
-	#Steam.join_requested.connect(_on_lobby_join_requested) # I don't remember what this was for...
+	Steam.join_requested.connect(_on_lobby_join_requested) # I don't remember what this was for...
 	Steam.lobby_match_list.connect(_on_lobby_match_list)
 
 #region Main Network Function
+## Creates a Steam lobby using the information provided in [param connection_info]. For Steam, this consists of [code]steam_lobby_type[/code], which should be set to a [enum Steam.LobbyType], otherwise it will default to [constant Steam.LobbyType.LOBBY_TYPE_PUBLIC].
 func become_host(connection_info : Dictionary = { "steam_lobby_type" : Steam.LobbyType.LOBBY_TYPE_PUBLIC }):
 	if Network.steam_lobby_id == 0: # Prevents you from creating a lobby if you are currently connected to a different lobby
 		Steam.createLobby(connection_info.steam_lobby_type, Network.room_size)
@@ -27,9 +28,9 @@ func join_as_client(connector_local = null):
 
 	Steam.joinLobby(connector)
 
-## Lists lobbies using the Steam.addRequestLobby... functions. Call any of these filters before calling this function to refine the lobby search
+## Lists lobbies using the [Steam] addRequestLobby... functions as filters. Call any of  before calling this function to refine the lobby search
 func list_lobbies():
-	Steam.addRequestLobbyListDistanceFilter(Steam.LOBBY_DISTANCE_FILTER_WORLDWIDE)
+	# Steam.addRequestLobbyListDistanceFilter(Steam.LOBBY_DISTANCE_FILTER_WORLDWIDE)
 
 	if ProjectSettings.get_setting("steam/initialization/app_id", 0) == 480:
 		Steam.addRequestLobbyListStringFilter("name", Network.steam_lobby_data["name"], Steam.LOBBY_COMPARISON_EQUAL)
@@ -38,7 +39,10 @@ func list_lobbies():
 
 #region Steam Functions
 
-## Checks for command line args that would tell the game to connect to a specific server on startup NOTE: This function is still Work-In-Progress. I have not had a chance to test this with an actual game as I do not have a Steam AppID of my own.
+## Checks for command line args that would tell the game to connect to a specific server on startup [br][br]
+## [color=yellow]NOTE:[/color] This function is still Work-In-Progress. I have not had a chance to test this
+## with an actual game as I do not have a Steam AppID of my own.
+## @experimental
 func check_command_line() -> void:
 	var command_args: Array = OS.get_cmdline_args()
 
@@ -60,7 +64,7 @@ func check_command_line() -> void:
 
 #region Lobby/Host Startup
 
-## Callback that runs when the [Steam] API finishes creating a lobby
+# Callback that runs when the [Steam] API finishes creating a lobby
 func _on_lobby_created(response : int, lobby_id : int):
 	if response == Steam.CHAT_ROOM_ENTER_RESPONSE_SUCCESS: # On connected OK
 		Network.steam_lobby_id = lobby_id
@@ -73,7 +77,7 @@ func _on_lobby_created(response : int, lobby_id : int):
 
 		_create_host()
 
-## Creates a host, I guess. idk im tired I just finished documenting all of the [Network] class and this is a private function so I can come back to this later.
+# Creates a host, I guess. idk im tired I just finished documenting all of the [Network] class and this is a private function so I can come back to this later.
 func _create_host():
 	var error = peer.create_host(0)
 	if error != OK:
@@ -89,30 +93,30 @@ func _create_host():
 	if Network._is_verbose:
 		print("Steam lobby hosted with id %d" % Network.steam_lobby_id)
 
-## Callback function that runs when Steam responds to a [Network.list_lobbies] query with... a list of lobbies :O
+# Callback function that runs when Steam responds to a [Network.list_lobbies] query with... a list of lobbies :O
 func _on_lobby_match_list(lobbies: Array) -> void:
 	Network.lobbies_fetched.emit(lobbies)
 #endregion
 
 #region Lobby Joining
-## I am not entirely clear on what this does, something to do with friend invites, but I can't test it because I don't have a Steam AppID
-#func _on_lobby_join_requested(this_lobby_id: int, friend_id: int) -> void:
-	## Get the lobby owner's name
-	#var owner_name: String = Steam.getFriendPersonaName(friend_id)
-#
-	#print("Joining %s's lobby..." % owner_name)
-#
-	## Attempt to join the lobby
-	#join_as_client(this_lobby_id)
+# I am not entirely clear on what this does, something to do with friend invites, but I can't test it because I don't have a Steam AppID
+func _on_lobby_join_requested(this_lobby_id: int, friend_id: int) -> void:
+	# Get the lobby owner's name
+	var owner_name: String = Steam.getFriendPersonaName(friend_id)
 
-## Callback function that runs once Steam tells the client that it has either connected or failed to connect
-## to the lobby
+	print("Joining %s's lobby..." % owner_name)
+
+	# Attempt to join the lobby
+	join_as_client(this_lobby_id)
+
+# Callback function that runs once Steam tells the client that it has either connected or failed to connect
+# to the lobby
 func _on_lobby_joined(lobby_id : int, _permissions : int, _locked : bool, response : int):
 	if response == Steam.CHAT_ROOM_ENTER_RESPONSE_SUCCESS:
 		var id = Steam.getLobbyOwner(lobby_id)
 
 		if id != Steam.getSteamID():
-			connect_socket(id)
+			_connect_socket(id)
 			if Network._is_verbose:
 				print("Connecting client to socket...")
 	else:
@@ -133,8 +137,8 @@ func _on_lobby_joined(lobby_id : int, _permissions : int, _locked : bool, respon
 			if Network._is_verbose:
 				print("Steam lobby connection failed with error: %s" % FAIL_REASON)
 
-## Creates a SteamMultiplayerPeer client
-func connect_socket(steam_id : int):
+# Creates a SteamMultiplayerPeer client
+func _connect_socket(steam_id : int):
 	var error = peer.create_client(steam_id, 0)
 	if error:
 		if Network._is_verbose:
