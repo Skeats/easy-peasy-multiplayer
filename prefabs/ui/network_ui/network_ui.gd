@@ -25,21 +25,21 @@ func _ready() -> void:
 
 # Main Network Buttons
 func _on_enet_pressed() -> void:
-	Network.active_network_type = Network.MultiplayerNetworkType.ENET
+	Network.set_network_type(NetworkEnet)
 	network_tab.visible = false
 	enet_connect_tab.visible = true
 
 func _on_steam_pressed() -> void:
-	Network.active_network_type = Network.MultiplayerNetworkType.STEAM
+	Network.set_network_type(NetworkSteam)
 	network_tab.visible = false
 	steam_lobby_browser.visible = true
 	for child in steam_lobby_list.get_children():
 		child.queue_free()
-	Network.list_lobbies()
+	Network.active_network.list_lobbies()
 
 # General callback functions
 func _on_host_pressed() -> void:
-	Network.become_host()
+	Network.active_network.become_host()
 	steam_lobby_browser.visible = false
 	enet_connect_tab.visible = false
 	lobby_tab.visible = true
@@ -51,19 +51,15 @@ func _on_back_to_main_pressed() -> void:
 	steam_lobby_browser.visible = false
 	lobby_tab.visible = false
 
-	if Network.active_network:
-		Network.disconnect_from_server()
-	elif Network.active_network_type != Network.MultiplayerNetworkType.DISABLED:
-		Network.active_network_type = Network.MultiplayerNetworkType.DISABLED
+	Network.disconnect_from_server(NetworkDisabled)
 
 # Enet Connection
 func _on_ip_text_submitted(new_text: String) -> void:
 	if new_text:
-		Network.ip_address = new_text
+		Network.active_network.join_as_client(new_text)
 	else:
-		Network.ip_address = "localhost"
+		Network.active_network.join_as_client()
 
-	Network.join_as_client()
 	enet_connect_tab.visible = false
 	lobby_tab.visible = true
 
@@ -79,17 +75,13 @@ func create_steam_lobby_list(lobbies: Array) -> void:
 		var button := Button.new()
 		button.text = "Lobby Name: %s | Players: %s/4" % [lobby_name, lobby_num_members]
 		button.pressed.connect(func():
-			Network.steam_lobby_id = lobby
-			Network.join_as_client()
+			Network.active_network.join_as_client(lobby)
 		)
 		steam_lobby_list.add_child(button)
 
 func _update_lobby_info(_opt_peer_id: int = 0, _opt_player_info: Dictionary = {}) -> void:
 	network_id.text = "Network ID: %s" % multiplayer.get_unique_id()
-	if Network.active_network_type == Network.MultiplayerNetworkType.ENET:
-		lobby_id.text = "Lobby ID: %s" % Network.ip_address
-	else:
-		lobby_id.text = "Lobby ID: %s" % Network.steam_lobby_id
+	lobby_id.text = "Lobby ID: %s" % Network.active_network.connector
 	connected_players.text = "Connected players:"
 	for player in Network.connected_players:
 		connected_players.text += "\n%s : %s" % [player, Network.connected_players[player].name]

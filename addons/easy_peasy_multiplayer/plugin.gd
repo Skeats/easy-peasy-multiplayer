@@ -36,11 +36,13 @@ func _enter_tree() -> void:
 
 		EditorInterface.popup_dialog_centered(dialog)
 
+func _disable_plugin() -> void:
+	_remove_project_settings()
+
 func _exit_tree() -> void:
 	# Removes autoloads
 	for autoload in AUTOLOADS:
 		remove_autoload_singleton(autoload)
-	_remove_project_settings()
 
 func _add_project_settings() -> void:
 	for section : String in SETTINGS:

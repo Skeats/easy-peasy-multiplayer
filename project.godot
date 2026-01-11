@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="Easy Peasy Multiplayer"
-config/version="1.0.1"
+config/version="2.0.0"
 config/tags=PackedStringArray("plugin")
 run/main_scene="uid://pmsw6eydfmh5"
 config/features=PackedStringArray("4.5", "Forward Plus")
@@ -28,7 +28,7 @@ file_logging/enable_file_logging=true
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/easy_peasy_multiplayer/plugin.cfg")
+enabled=PackedStringArray("res://addons/easy_peasy_multiplayer/plugin.cfg", "res://addons/gdUnit4/plugin.cfg")
 
 [input]
 

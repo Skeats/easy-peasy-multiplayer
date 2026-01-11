@@ -10,15 +10,6 @@ signal player_ready ## Emitted when a player has readied or unreadied
 signal server_started ## Emitted when the server has been created
 signal lobbies_fetched(lobbies) ## Emitted when [Network.list_lobbies] has a response
 
-## An enum for the network types that can be used
-enum MultiplayerNetworkType { DISABLED, ENET, STEAM }
-
-## The currently active network type
-var active_network_type : MultiplayerNetworkType = MultiplayerNetworkType.DISABLED :
-	set(value):
-		active_network_type = value
-		network_type_changed.emit(active_network_type)
-
 ## The physical node for the active network, which is what makes using multiple networks so easy
 var active_network : NetworkType
 
@@ -31,33 +22,22 @@ var player_info = {
 ## The number of players that can connect to the server.
 var room_size: int = 4
 
-## Whether the local client is the host of a server or not.
-var is_host : bool
-
 ## A [Dictionary] containing all of the currently connected players, their network ids, and any info defined in [Network.player_info]
 var connected_players = {}
 
 ## An array containing network ids of all the players that are ready
 var players_ready : Array[int]
 
-## The ip address that the network manager should use to try and connect to a server. Used for Enet only by default
-var ip_address : String = "127.0.0.1" # IPv4 localhost
-
-# Steam Variables
-## The lobby data that a Steam lobby should be created with.
-var steam_lobby_data = {
-	"name": "MOVEMENTSHOOTER_TEST_LOBBY",
-	"game": "DEFAULTSCENE"
-}
-
-## The lobby id of the Steam lobby
-var steam_lobby_id: int = 0
+## Whether the local client is the host of a server or not. This should not be changed by any script outside of the network manager
+var is_host : bool
 
 ## Whether the network manager should print its actions to standard output
 var _is_verbose: bool = false
 
 func _ready():
 	_update_settings()
+
+	NetworkSteam.lobby_data = {"lmao": "fuck you"}
 
 	# So many signals :O
 	multiplayer.peer_connected.connect(_on_player_connected)
@@ -74,40 +54,36 @@ func _ready():
 	else:
 		var desktop_path := OS.get_system_dir(OS.SYSTEM_DIR_DESKTOP).replace("\\", "/").split("/")
 		player_info["name"] = desktop_path[desktop_path.size() - 2]
+	set_network_type(NetworkDisabled)
 
-# These are designed to be easy functions to throw into a console plugin of your choice
+# These are designed for my dev tools, but they should be usable in code and in other console plugins, you just might need to adjust the arguments.
 #region Dev Commands
-## Sets the current network
-func dev_set_network(network: String):
-	if network:
-		match network:
-			"Steam":
-				active_network_type = MultiplayerNetworkType.STEAM
-			"Enet":
-				active_network_type = MultiplayerNetworkType.ENET
-			"None":
-				active_network_type = MultiplayerNetworkType.DISABLED
-			_:
-				return "[color=red]ERROR: No network type named " + network + "[/color]"
+func dev_host_steam_lobby() -> void:
+	set_network_type(NetworkSteam)
+	active_network.become_host()
 
-		_build_multiplayer_network(true)
-		return "Network type changed to " + network
-	else:
-		return "Available Arguments: [color=green]\nSteam\nEnet\nNone[/color]"
-
-## Hosts a lobby using the currently selected network type
-func dev_host_lobby():
-	become_host()
+func dev_host_enet_lobby() -> void:
+	set_network_type(NetworkEnet).become_host()
 
 ## Joins a lobby using the argument passed in as either a Steam lobbyID or an IP address, depending on the type of network used
-func dev_join_lobby(connector: String):
-	if active_network_type == MultiplayerNetworkType.STEAM:
-		steam_lobby_id = connector.to_int()
+func dev_join_lobby(connector: String) -> String:
+	var str: String = "No active network built"
+	if not active_network:
+		print(str)
+		return str
+	if active_network is NetworkSteam:
+		active_network.join_as_client(connector.to_int())
+		str = "Starting Steam lobby"
 	else:
 		if connector:
-			ip_address = connector
+			active_network.join_as_client(connector)
+		else:
+			active_network.join_as_client()
+		str = "Starting Enet lobby"
 
-	join_as_client()
+	print(str)
+	return str
+
 
 ## Disconnects from a lobby, if connected
 func dev_disconnect():
@@ -119,75 +95,26 @@ func _update_settings() -> void:
 	if ProjectSettings.has_setting("easy_peasy_multiplayer/general/verbose_network_logging"):
 		_is_verbose = ProjectSettings.get_setting("easy_peasy_multiplayer/general/verbose_network_logging", false)
 
-#region Private Network Setup Functions
-## Sets the active network to the active network type
-func _build_multiplayer_network(destroy_previous_network : bool = false):
-	if not active_network or destroy_previous_network:
-		match active_network_type:
-			MultiplayerNetworkType.ENET:
-				if _is_verbose:
-					print("Setting network type to ENet")
-				_set_active_network(NetworkEnet)
-			MultiplayerNetworkType.STEAM:
-				if _is_verbose:
-					print("Setting network type to Steam")
-				_set_active_network(NetworkSteam)
-			MultiplayerNetworkType.DISABLED:
-				if _is_verbose:
-					print("Disabled networking")
-				_remove_active_network()
-			_:
-				push_warning("No match for network type")
-
-## Builds a network scene based on the passed parameters
-func _set_active_network(new_network_type : Object):
-	_remove_active_network()
-	active_network = new_network_type.new()
-	add_child(active_network, true)
-
-## Removes the current active network, if one exists
-func _remove_active_network():
+## Sets the active network to the [NetworkType] provided, if any
+func set_network_type(new_network_type: Object = NetworkDisabled) -> NetworkType:
+	if _is_verbose:
+		print("Setting network type to %s" % new_network_type.get_class())
 	if is_instance_valid(active_network):
 		active_network.queue_free()
-#endregion
-
-#region Network-Specific Functions
-
-## Creates a new server using the currently selected [Steam.active_network_type]. Additional information regarding the connection can be passed through [param connection_info]. For [Network.MultiplayerNetworkType.STEAM]
-func become_host(connection_info : Dictionary = {
-	"steam_lobby_type" : Steam.LobbyType.LOBBY_TYPE_PUBLIC,
-	"port" : NetworkEnet.DEFAULT_PORT
-}):
-	_build_multiplayer_network()
-	if active_network_type != MultiplayerNetworkType.DISABLED:
-		active_network.become_host(connection_info)
-
-
-## Joins a lobby as a client using either the [Network.ip_address] or [Network.steam_lobby_id], depending on the current [Network.active_network_type]
-func join_as_client():
-	_build_multiplayer_network()
-	if active_network_type != MultiplayerNetworkType.DISABLED:
-		active_network.join_as_client()
+	active_network = new_network_type.new()
+	add_child(active_network, true)
+	return active_network
 
 ## Disconnects the current peer from any connected servers. A [enum Network.MultiplayerNetworkType] can optionally be passed to set the network type to use after disconnecting, which can be useful for instances like going back to the lobby browser after leaving a server.
-func disconnect_from_server(network_type : MultiplayerNetworkType = MultiplayerNetworkType.DISABLED):
+func disconnect_from_server(network_type: Object = NetworkDisabled):
 	# This expression may not be necessary
-	if steam_lobby_id != 0:
-		Steam.leaveLobby(steam_lobby_id)
+	if active_network is NetworkSteam and active_network.connector != 0:
+		Steam.leaveLobby(active_network.connector)
 
-	active_network_type = network_type
 	multiplayer.multiplayer_peer = null
 	connected_players.clear()
-	steam_lobby_id = 0
 	is_host = false
-	_build_multiplayer_network(true)
-
-## Lists any lobbies that the current [Network.active_network_type] can find. NOTE: This function does nothing when using Enet as the network type, as there is no lobby system when using Enet.
-func list_lobbies():
-	_build_multiplayer_network()
-	if active_network_type != MultiplayerNetworkType.DISABLED:
-		active_network.list_lobbies()
-#endregion
+	set_network_type(network_type)
 
 #region MultiplayerAPI Signals
 

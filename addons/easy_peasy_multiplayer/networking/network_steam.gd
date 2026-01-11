@@ -6,6 +6,13 @@ extends NetworkType
 ## I have no idea what this does I won't lie
 const PACKET_READ_LIMIT: int = 32
 
+static var lobby_id: int = 0
+
+static var lobby_data: Dictionary = {
+	"name": "MOVEMENTSHOOTER_TEST_LOBBY",
+	"game": "DEFAULTSCENE"
+}
+
 func _ready() -> void:
 	peer = SteamMultiplayerPeer.new()
 
@@ -15,10 +22,10 @@ func _ready() -> void:
 	Steam.lobby_match_list.connect(_on_lobby_match_list)
 
 #region Main Network Function
-## Creates a Steam lobby using the information provided in [param connection_info]. For Steam, this consists of [code]steam_lobby_type[/code], which should be set to a [enum Steam.LobbyType], otherwise it will default to [constant Steam.LobbyType.LOBBY_TYPE_PUBLIC].
-func become_host(connection_info : Dictionary = { "steam_lobby_type" : Steam.LobbyType.LOBBY_TYPE_PUBLIC }):
-	if Network.steam_lobby_id == 0: # Prevents you from creating a lobby if you are currently connected to a different lobby
-		Steam.createLobby(connection_info.steam_lobby_type, Network.room_size)
+## Creates a Steam lobby using the information provided in [param connection_info]. For Steam, this should be set to a [enum Steam.LobbyType], otherwise it will default to [constant Steam.LobbyType.LOBBY_TYPE_PUBLIC].
+func become_host(connection_info = Steam.LobbyType.LOBBY_TYPE_PUBLIC):
+	if lobby_id == 0: # Prevents you from creating a lobby if you are currently connected to a different lobby
+		Steam.createLobby(connection_info, Network.room_size)
 
 func join_as_client(connector_local = null):
 	if connector_local:
@@ -33,7 +40,7 @@ func list_lobbies():
 	# Steam.addRequestLobbyListDistanceFilter(Steam.LOBBY_DISTANCE_FILTER_WORLDWIDE)
 
 	if ProjectSettings.get_setting("steam/initialization/app_id", 0) == 480:
-		Steam.addRequestLobbyListStringFilter("name", Network.steam_lobby_data["name"], Steam.LOBBY_COMPARISON_EQUAL)
+		Steam.addRequestLobbyListStringFilter("name", lobby_data["name"], Steam.LOBBY_COMPARISON_EQUAL)
 	Steam.requestLobbyList()
 #endregion
 
@@ -59,21 +66,21 @@ func check_command_line() -> void:
 				# Something like a loading into lobby screen
 				if Network._is_verbose:
 					print("Command line lobby ID: %d" % command_args[1])
-				Network.steam_lobby_id = int(command_args[1])
+				lobby_id = int(command_args[1])
 				Network.is_host = false
 
 #region Lobby/Host Startup
 
 # Callback that runs when the [Steam] API finishes creating a lobby
-func _on_lobby_created(response : int, lobby_id : int):
+func _on_lobby_created(response : int, new_lobby_id : int):
 	if response == Steam.CHAT_ROOM_ENTER_RESPONSE_SUCCESS: # On connected OK
-		Network.steam_lobby_id = lobby_id
+		lobby_id = new_lobby_id
 		print("Created lobby: %d" % lobby_id)
 
-		Steam.setLobbyJoinable(Network.steam_lobby_id, true)
+		Steam.setLobbyJoinable(lobby_id, true)
 
-		for entry in Network.steam_lobby_data:
-			Steam.setLobbyData(Network.steam_lobby_id, entry, Network.steam_lobby_data[entry])
+		for entry in lobby_data:
+			Steam.setLobbyData(lobby_id, entry, lobby_data[entry])
 
 		_create_host()
 
@@ -82,16 +89,16 @@ func _create_host():
 	var error = peer.create_host(0)
 	if error != OK:
 		if Network._is_verbose:
-			print("Error creating host: %s" %error_string(error))
+			print("Error creating host: %s" % error_string(error))
 		return error
 
 	multiplayer.multiplayer_peer = peer
+	Network.is_host = true
 	Network.connected_players[1] = Network.player_info
 	Network.server_started.emit()
 	Network.player_connected.emit(1, Network.player_info)
-	Network.is_host = true
 	if Network._is_verbose:
-		print("Steam lobby hosted with id %d" % Network.steam_lobby_id)
+		print("Steam lobby hosted with id %d" % lobby_id)
 
 # Callback function that runs when Steam responds to a [Network.list_lobbies] query with... a list of lobbies :O
 func _on_lobby_match_list(lobbies: Array) -> void:
@@ -151,3 +158,5 @@ func _connect_socket(steam_id : int):
 	Network.is_host = false
 #endregion
 #endregion
+
+func get_class(): return "NetworkSteam"

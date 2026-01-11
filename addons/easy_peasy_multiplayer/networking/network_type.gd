@@ -9,10 +9,12 @@ var peer : MultiplayerPeer
 var connector
 
 ## Creates a lobby using the provided [param connection_info]
-@abstract func become_host(connection_info : Dictionary = {}) -> void
+@abstract func become_host(connection_info = null) -> void
 
 ## Joins a game server using the [NetworkType]'s [member connector], or the [param connector_local], if passed
 @abstract func join_as_client(connector_local = null) -> void
+
+@abstract func get_class() -> String
 
 ## Lists discovered lobbies, if the current [NetworkType] has defined functionality for it. If your [NetworkType] does not have any available lobby functionality, then there is no need to override this.
 func list_lobbies() -> void:
