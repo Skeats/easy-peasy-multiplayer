@@ -69,8 +69,8 @@ func _on_join_enet_pressed() -> void:
 # Steam lobby
 func create_steam_lobby_list(lobbies: Array) -> void:
 	for lobby in lobbies:
-		var lobby_name: String = Steam.getLobbyData(lobby, "name")
-		var lobby_num_members: int = Steam.getNumLobbyMembers(lobby)
+		var lobby_name: String = SteamInfo.steam_api.getLobbyData(lobby, "name")
+		var lobby_num_members: int = SteamInfo.steam_api.getNumLobbyMembers(lobby)
 
 		var button := Button.new()
 		button.text = "Lobby Name: %s | Players: %s/4" % [lobby_name, lobby_num_members]

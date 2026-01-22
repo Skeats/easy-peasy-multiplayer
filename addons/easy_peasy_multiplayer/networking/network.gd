@@ -111,7 +111,7 @@ func set_network_type(new_network_type: Object = NetworkDisabled) -> NetworkType
 func disconnect_from_server(network_type: Object = NetworkDisabled):
 	# This expression may not be necessary
 	if active_network is NetworkSteam and active_network.connector != 0:
-		Steam.leaveLobby(active_network.connector)
+		SteamInfo.steam_api.leaveLobby(active_network.connector)
 
 	if is_host:
 		host_closed.emit()

@@ -1,6 +1,8 @@
 extends Node
 
 # Steam Variables
+var steam_api: Object = null
+
 var is_on_steam_deck: bool = false
 var is_online: bool = false
 var is_owned: bool = false
@@ -25,35 +27,40 @@ func _init() -> void:
 	pass
 
 func _ready() -> void:
-	#Steam.get_auth_session_ticket_response.connect(_on_get_auth_session_ticket_response)
-	#Steam.validate_auth_ticket_response.connect(_on_validate_auth_ticket_response)
+	#SteamInfo.steam_api.get_auth_session_ticket_response.connect(_on_get_auth_session_ticket_response)
+	#SteamInfo.steam_api.validate_auth_ticket_response.connect(_on_validate_auth_ticket_response)
 	initialize_steam()
 
 func _process(_delta: float) -> void:
-	Steam.run_callbacks()
+	if steam_api:
+		steam_api.run_callbacks()
 
 func initialize_steam() -> void:
-	var initialize_response: Dictionary = Steam.steamInitEx()
+	if Engine.has_singleton("Steam"):
+		steam_api = Engine.get_singleton("Steam")
+		var initialize_response: Dictionary = steam_api.steamInitEx()
 
-	if initialize_response['status'] > 0:
-		print("Failed to initialize Steam, shutting down: %s" % initialize_response)
-		get_tree().quit()
+		print("[STEAM] Did Steam initialize?: %s" % initialize_response)
 
-	# Gather additional data
-	is_on_steam_deck = Steam.isSteamRunningOnSteamDeck()
-	is_online = Steam.loggedOn()
-	is_owned = Steam.isSubscribed()
-	is_family_shared = Steam.isSubscribedFromFamilySharing()
-	is_free_weekend = Steam.isSubscribedFromFreeWeekend()
-	timed_trial_stats = Steam.isTimedTrial()
-	app_owner = Steam.getAppOwner()
-	steam_id = Steam.getSteamID()
-	steam_username = Steam.getPersonaName()
-	auth_ticket = Steam.getAuthSessionTicket()
+		if initialize_response['status'] > 0:
+			print("Failed to initialize Steam, shutting down: %s" % initialize_response)
+			get_tree().quit()
 
-	if not is_owned or is_family_shared or is_free_weekend:
-		print("User does not own this game")
-		get_tree().quit()
+		# Gather additional data
+		is_on_steam_deck = steam_api.isSteamRunningOnSteamDeck()
+		is_online = steam_api.loggedOn()
+		is_owned = steam_api.isSubscribed()
+		is_family_shared = steam_api.isSubscribedFromFamilySharing()
+		is_free_weekend = steam_api.isSubscribedFromFreeWeekend()
+		timed_trial_stats = steam_api.isTimedTrial()
+		app_owner = steam_api.getAppOwner()
+		steam_id = steam_api.getSteamID()
+		steam_username = steam_api.getPersonaName()
+		auth_ticket = steam_api.getAuthSessionTicket()
+
+		if not is_owned or is_family_shared or is_free_weekend:
+			print("User does not own this game")
+			get_tree().quit()
 
 #region User Authentication [WIP, NOT FUNCTIONING]
 # https://godotsteam.com/tutorials/authentication/#__tabbed_1_2
@@ -84,7 +91,7 @@ func _on_validate_auth_ticket_response(auth_id: int, response: int, owner_id: in
 	print("Game owner ID: %s" % owner_id)
 
 func validate_auth_session(ticket: Dictionary, steam_id: int) -> void:
-	var auth_response: int = Steam.beginAuthSession(ticket.buffer, ticket.size, steam_id)
+	var auth_response: int = steam_api.beginAuthSession(ticket.buffer, ticket.size, steam_id)
 
 	# Get a verbose response; unnecessary but useful in this example
 	var verbose_response: String

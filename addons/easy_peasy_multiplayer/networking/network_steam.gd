@@ -16,16 +16,16 @@ static var lobby_data: Dictionary = {
 func _ready() -> void:
 	peer = SteamMultiplayerPeer.new()
 
-	Steam.lobby_created.connect(_on_lobby_created)
-	Steam.lobby_joined.connect(_on_lobby_joined)
-	Steam.join_requested.connect(_on_lobby_join_requested) # I don't remember what this was for...
-	Steam.lobby_match_list.connect(_on_lobby_match_list)
+	SteamInfo.steam_api.lobby_created.connect(_on_lobby_created)
+	SteamInfo.steam_api.lobby_joined.connect(_on_lobby_joined)
+	SteamInfo.steam_api.join_requested.connect(_on_lobby_join_requested) # I don't remember what this was for...
+	SteamInfo.steam_api.lobby_match_list.connect(_on_lobby_match_list)
 
 #region Main Network Function
 ## Creates a Steam lobby using the information provided in [param connection_info]. For Steam, this should be set to a [enum Steam.LobbyType], otherwise it will default to [constant Steam.LobbyType.LOBBY_TYPE_PUBLIC].
-func become_host(connection_info = Steam.LobbyType.LOBBY_TYPE_PUBLIC):
+func become_host(connection_info = SteamInfo.steam_api.LobbyType.LOBBY_TYPE_PUBLIC):
 	if lobby_id == 0: # Prevents you from creating a lobby if you are currently connected to a different lobby
-		Steam.createLobby(connection_info, Network.room_size)
+		SteamInfo.steam_api.createLobby(connection_info, Network.room_size)
 
 func join_as_client(connector_local = null):
 	if connector_local:
@@ -33,15 +33,15 @@ func join_as_client(connector_local = null):
 
 	if not connector: return
 
-	Steam.joinLobby(connector)
+	SteamInfo.steam_api.joinLobby(connector)
 
 ## Lists lobbies using the [Steam] addRequestLobby... functions as filters. Call any of  before calling this function to refine the lobby search
 func list_lobbies():
-	# Steam.addRequestLobbyListDistanceFilter(Steam.LOBBY_DISTANCE_FILTER_WORLDWIDE)
+	# SteamInfo.steam_api.addRequestLobbyListDistanceFilter(SteamInfo.steam_api.LOBBY_DISTANCE_FILTER_WORLDWIDE)
 
 	if ProjectSettings.get_setting("steam/initialization/app_id", 0) == 480:
-		Steam.addRequestLobbyListStringFilter("name", lobby_data["name"], Steam.LOBBY_COMPARISON_EQUAL)
-	Steam.requestLobbyList()
+		SteamInfo.steam_api.addRequestLobbyListStringFilter("name", lobby_data["name"], SteamInfo.steam_api.LOBBY_COMPARISON_EQUAL)
+	SteamInfo.steam_api.requestLobbyList()
 #endregion
 
 #region Steam Functions
@@ -73,14 +73,14 @@ func check_command_line() -> void:
 
 # Callback that runs when the [Steam] API finishes creating a lobby
 func _on_lobby_created(response : int, new_lobby_id : int):
-	if response == Steam.CHAT_ROOM_ENTER_RESPONSE_SUCCESS: # On connected OK
+	if response == SteamInfo.steam_api.CHAT_ROOM_ENTER_RESPONSE_SUCCESS: # On connected OK
 		lobby_id = new_lobby_id
 		print("Created lobby: %d" % lobby_id)
 
-		Steam.setLobbyJoinable(lobby_id, true)
+		SteamInfo.steam_api.setLobbyJoinable(lobby_id, true)
 
 		for entry in lobby_data:
-			Steam.setLobbyData(lobby_id, entry, lobby_data[entry])
+			SteamInfo.steam_api.setLobbyData(lobby_id, entry, lobby_data[entry])
 
 		_create_host()
 
@@ -109,7 +109,7 @@ func _on_lobby_match_list(lobbies: Array) -> void:
 # I am not entirely clear on what this does, something to do with friend invites, but I can't test it because I don't have a Steam AppID
 func _on_lobby_join_requested(this_lobby_id: int, friend_id: int) -> void:
 	# Get the lobby owner's name
-	var owner_name: String = Steam.getFriendPersonaName(friend_id)
+	var owner_name: String = SteamInfo.steam_api.getFriendPersonaName(friend_id)
 
 	print("Joining %s's lobby..." % owner_name)
 
@@ -119,10 +119,10 @@ func _on_lobby_join_requested(this_lobby_id: int, friend_id: int) -> void:
 # Callback function that runs once Steam tells the client that it has either connected or failed to connect
 # to the lobby
 func _on_lobby_joined(lobby_id : int, _permissions : int, _locked : bool, response : int):
-	if response == Steam.CHAT_ROOM_ENTER_RESPONSE_SUCCESS:
-		var id = Steam.getLobbyOwner(lobby_id)
+	if response == SteamInfo.steam_api.CHAT_ROOM_ENTER_RESPONSE_SUCCESS:
+		var id = SteamInfo.steam_api.getLobbyOwner(lobby_id)
 
-		if id != Steam.getSteamID():
+		if id != SteamInfo.steam_api.getSteamID():
 			_connect_socket(id)
 			if Network._is_verbose:
 				print("Connecting client to socket...")
