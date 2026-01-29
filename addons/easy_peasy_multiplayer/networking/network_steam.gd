@@ -15,7 +15,6 @@ static var lobby_data: Dictionary = {
 
 func _ready() -> void:
 	peer = SteamMultiplayerPeer.new()
-	connector =
 
 	SteamInfo.steam_api.lobby_created.connect(_on_lobby_created)
 	SteamInfo.steam_api.lobby_joined.connect(_on_lobby_joined)
