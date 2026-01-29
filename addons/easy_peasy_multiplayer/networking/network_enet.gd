@@ -8,6 +8,7 @@ const DEFAULT_PORT = 7000
 
 func _ready() -> void:
 	peer = ENetMultiplayerPeer.new()
+	connector = LOCALHOST
 
 #region Network-Specific Functions
 ## Creates an ENet server using any information provided in [param connection_info]. For ENet, this consists of a port which, unless specified, will default to the [member DEFAULT_PORT].
@@ -29,7 +30,7 @@ func become_host(connection_info = DEFAULT_PORT):
 	if Network._is_verbose:
 		print("ENet Server hosted on port %d" % connection_info)
 
-func join_as_client(connection_info = LOCALHOST):
+func join_as_client(connection_info = connector):
 	var ip = connection_info
 	var port = DEFAULT_PORT
 

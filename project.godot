@@ -8,19 +8,23 @@
 
 config_version=5
 
+[animation]
+
+compatibility/default_parent_skeleton_in_mesh_instance_3d=true
+
 [application]
 
 config/name="Easy Peasy Multiplayer"
 config/version="2.0.0"
 config/tags=PackedStringArray("plugin")
 run/main_scene="uid://pmsw6eydfmh5"
-config/features=PackedStringArray("4.5", "Forward Plus")
+config/features=PackedStringArray("4.6", "Forward Plus")
 config/icon="uid://c1julnh5bh8n1"
 
 [autoload]
 
-SteamInfo="*res://addons/easy_peasy_multiplayer/steam_info.gd"
-Network="*res://addons/easy_peasy_multiplayer/networking/network.gd"
+SteamInfo="*uid://bnrrf8q027js4"
+Network="*uid://cq3b8bnp6no5g"
 
 [debug]
 

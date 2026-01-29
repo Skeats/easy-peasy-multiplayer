@@ -15,6 +15,7 @@ static var lobby_data: Dictionary = {
 
 func _ready() -> void:
 	peer = SteamMultiplayerPeer.new()
+	connector =
 
 	SteamInfo.steam_api.lobby_created.connect(_on_lobby_created)
 	SteamInfo.steam_api.lobby_joined.connect(_on_lobby_joined)
@@ -27,13 +28,10 @@ func become_host(connection_info = SteamInfo.steam_api.LobbyType.LOBBY_TYPE_PUBL
 	if lobby_id == 0: # Prevents you from creating a lobby if you are currently connected to a different lobby
 		SteamInfo.steam_api.createLobby(connection_info, Network.room_size)
 
-func join_as_client(connector_local = null):
-	if connector_local:
-		connector = connector_local
+func join_as_client(connection_info = connector):
+	if not connection_info: return
 
-	if not connector: return
-
-	SteamInfo.steam_api.joinLobby(connector)
+	SteamInfo.steam_api.joinLobby(connection_info)
 
 ## Lists lobbies using the [Steam] addRequestLobby... functions as filters. Call any of  before calling this function to refine the lobby search
 func list_lobbies():
