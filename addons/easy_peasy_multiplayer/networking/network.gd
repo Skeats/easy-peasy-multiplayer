@@ -38,8 +38,6 @@ var _is_verbose: bool = false
 func _ready():
 	_update_settings()
 
-	NetworkSteam.lobby_data = {"lmao": "fuck you"}
-
 	# So many signals :O
 	multiplayer.peer_connected.connect(_on_player_connected)
 	multiplayer.peer_disconnected.connect(_on_player_disconnected)
@@ -98,19 +96,19 @@ func _update_settings() -> void:
 
 ## Sets the active network to the [NetworkType] provided, if any
 func set_network_type(new_network_type: Object = NetworkDisabled) -> NetworkType:
-	if _is_verbose:
-		print("Setting network type to %s" % new_network_type.get_class())
 	if is_instance_valid(active_network):
 		active_network.queue_free()
 	active_network = new_network_type.new()
 	add_child(active_network, true)
+	if _is_verbose:
+		print("Setting network type to %s" % active_network.get_network_name())
 	network_changed.emit(active_network)
 	return active_network
 
 ## Disconnects the current peer from any connected servers. A [enum Network.MultiplayerNetworkType] can optionally be passed to set the network type to use after disconnecting, which can be useful for instances like going back to the lobby browser after leaving a server.
 func disconnect_from_server(network_type: Object = NetworkDisabled):
 	# This expression may not be necessary
-	if active_network is NetworkSteam and active_network.connector != 0:
+	if active_network is NetworkSteam and active_network.connector:
 		SteamInfo.steam_api.leaveLobby(active_network.connector)
 
 	if is_host:

@@ -14,7 +14,7 @@ var connector
 ## Joins a game server using the [NetworkType]'s [member connector], or the [param connector_local], if passed
 @abstract func join_as_client(connector_local = null) -> void
 
-@abstract func get_class() -> String
+@abstract func get_network_name() -> String
 
 ## Lists discovered lobbies, if the current [NetworkType] has defined functionality for it. If your [NetworkType] does not have any available lobby functionality, then there is no need to override this.
 func list_lobbies() -> void:

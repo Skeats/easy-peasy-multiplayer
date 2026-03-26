@@ -56,7 +56,7 @@ func join_as_client(connection_info = connector):
 		print("ENet client connecting to %s:%d" % [ip, port])
 #endregion
 
-func get_class(): return "NetworkEnet"
+func get_network_name(): return "NetworkEnet"
 
 func set_connector(ip: String, port: int) -> void:
 	connector = "%s:%d" % [ip, port]

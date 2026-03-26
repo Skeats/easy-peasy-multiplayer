@@ -6,8 +6,6 @@ extends NetworkType
 ## I have no idea what this does I won't lie
 const PACKET_READ_LIMIT: int = 32
 
-static var lobby_id: int = 0
-
 static var lobby_data: Dictionary = {
 	"name": "Easy Peasy Multiplayer Game",
 	"game": "DEFAULTSCENE"
@@ -23,8 +21,8 @@ func _ready() -> void:
 
 #region Main Network Function
 ## Creates a Steam lobby using the information provided in [param connection_info]. For Steam, this should be set to a [enum Steam.LobbyType], otherwise it will default to [constant Steam.LobbyType.LOBBY_TYPE_PUBLIC].
-func become_host(connection_info = SteamInfo.steam_api.LobbyType.LOBBY_TYPE_PUBLIC):
-	if lobby_id == 0: # Prevents you from creating a lobby if you are currently connected to a different lobby
+func become_host(connection_info = SteamInfo.steam_api.LOBBY_TYPE_PUBLIC):
+	if not connector: # Prevents you from creating a lobby if you are currently connected to a different lobby
 		SteamInfo.steam_api.createLobby(connection_info, Network.room_size)
 
 func join_as_client(connection_info = connector):
@@ -63,7 +61,7 @@ func check_command_line() -> void:
 				# Something like a loading into lobby screen
 				if Network._is_verbose:
 					print("Command line lobby ID: %d" % command_args[1])
-				lobby_id = int(command_args[1])
+				connector = int(command_args[1])
 				Network.is_host = false
 
 #region Lobby/Host Startup
@@ -71,15 +69,17 @@ func check_command_line() -> void:
 # Callback that runs when the [Steam] API finishes creating a lobby
 func _on_lobby_created(response : int, new_lobby_id : int):
 	if response == SteamInfo.steam_api.CHAT_ROOM_ENTER_RESPONSE_SUCCESS: # On connected OK
-		lobby_id = new_lobby_id
-		print("Created lobby: %d" % lobby_id)
+		connector = new_lobby_id
+		print("Created lobby: %d" % connector)
 
-		SteamInfo.steam_api.setLobbyJoinable(lobby_id, true)
+		SteamInfo.steam_api.setLobbyJoinable(connector, true)
 
 		for entry in lobby_data:
-			SteamInfo.steam_api.setLobbyData(lobby_id, entry, lobby_data[entry])
+			SteamInfo.steam_api.setLobbyData(connector, entry, lobby_data[entry])
 
 		_create_host()
+	else:
+		print("Error creating lobby: %s" % response)
 
 # Creates a host, I guess. idk im tired I just finished documenting all of the [Network] class and this is a private function so I can come back to this later.
 func _create_host():
@@ -95,7 +95,7 @@ func _create_host():
 	Network.server_started.emit()
 	Network.player_connected.emit(1, Network.player_info)
 	if Network._is_verbose:
-		print("Steam lobby hosted with id %d" % lobby_id)
+		print("Steam lobby hosted with id %d" % connector)
 
 # Callback function that runs when Steam responds to a [Network.list_lobbies] query with... a list of lobbies :O
 func _on_lobby_match_list(lobbies: Array) -> void:
@@ -156,4 +156,4 @@ func _connect_socket(steam_id : int):
 #endregion
 #endregion
 
-func get_class(): return "NetworkSteam"
+func get_network_name(): return "NetworkSteam"
