@@ -30,10 +30,6 @@ Network="*uid://cq3b8bnp6no5g"
 
 file_logging/enable_file_logging=true
 
-[easy_peasy_multiplayer]
-
-general/verbose_network_logging=true
-
 [editor_plugins]
 
 enabled=PackedStringArray("res://addons/easy_peasy_multiplayer/plugin.cfg", "res://addons/gdUnit4/plugin.cfg")
@@ -59,6 +55,5 @@ jump={
 [steam]
 
 initialization/app_id=480
-initialization/initialize_on_startup=false
-initialization/embed_callbacks=false
 multiplayer_peer/max_channels=4
+initialization/initialize_on_startup=true

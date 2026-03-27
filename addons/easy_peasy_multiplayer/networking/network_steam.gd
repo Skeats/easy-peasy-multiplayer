@@ -12,7 +12,11 @@ static var lobby_data: Dictionary = {
 }
 
 func _ready() -> void:
-	peer = SteamMultiplayerPeer.new()
+	if ClassDB.class_exists("SteamMultiplayerPeer") and SteamInfo.steam_api:
+		peer = ClassDB.instantiate("SteamMultiplayerPeer")
+	else:
+		Network.disconnect_from_server()
+		return
 
 	SteamInfo.steam_api.lobby_created.connect(_on_lobby_created)
 	SteamInfo.steam_api.lobby_joined.connect(_on_lobby_joined)

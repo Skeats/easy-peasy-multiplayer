@@ -29,7 +29,8 @@ func _init() -> void:
 func _ready() -> void:
 	#SteamInfo.steam_api.get_auth_session_ticket_response.connect(_on_get_auth_session_ticket_response)
 	#SteamInfo.steam_api.validate_auth_ticket_response.connect(_on_validate_auth_ticket_response)
-	initialize_steam()
+	if ProjectSettings.get_setting("easy_peasy_multiplayer/steam/enable_steam", false):
+		initialize_steam()
 
 func _process(_delta: float) -> void:
 	if steam_api:
@@ -38,13 +39,6 @@ func _process(_delta: float) -> void:
 func initialize_steam() -> void:
 	if Engine.has_singleton("Steam"):
 		steam_api = Engine.get_singleton("Steam")
-		var initialize_response: Dictionary = steam_api.steamInitEx()
-
-		print("[STEAM] Did Steam initialize?: %s" % initialize_response)
-
-		if initialize_response['status'] > 0:
-			print("Failed to initialize Steam, shutting down: %s" % initialize_response)
-			get_tree().quit()
 
 		# Gather additional data
 		is_on_steam_deck = steam_api.isSteamRunningOnSteamDeck()

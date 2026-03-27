@@ -1,4 +1,4 @@
-[gd_scene load_steps=14 format=3 uid="uid://cpx5lxwe6l8iv"]
+[gd_scene format=3 uid="uid://cpx5lxwe6l8iv"]
 
 [ext_resource type="Script" uid="uid://vxnltni30unu" path="res://prefabs/player/player.gd" id="1_sxsrd"]
 [ext_resource type="Texture2D" uid="uid://boq1we22nyjkj" path="res://assets/spritesheet-characters-default.png" id="2_rdx4y"]
@@ -81,7 +81,7 @@ animations = [{
 }]
 
 [sub_resource type="CapsuleShape2D" id="CapsuleShape2D_rdx4y"]
-radius = 38.0
+radius = 22.0
 height = 90.0
 
 [sub_resource type="SceneReplicationConfig" id="SceneReplicationConfig_rdx4y"]
@@ -97,30 +97,30 @@ font_size = 24
 outline_size = 15
 outline_color = Color(0, 0, 0, 1)
 
-[node name="Player" type="CharacterBody2D"]
+[node name="Player" type="CharacterBody2D" unique_id=546989789]
 floor_constant_speed = true
 floor_snap_length = 5.0
 script = ExtResource("1_sxsrd")
 
-[node name="PlayerSprite" type="AnimatedSprite2D" parent="."]
+[node name="PlayerSprite" type="AnimatedSprite2D" parent="." unique_id=1746886190]
 position = Vector2(0, -19)
 sprite_frames = SubResource("SpriteFrames_ev8v4")
 animation = &"idle_side"
 autoplay = "idle"
 
-[node name="PlayerHitbox" type="CollisionShape2D" parent="."]
+[node name="PlayerHitbox" type="CollisionShape2D" parent="." unique_id=27256864]
 shape = SubResource("CapsuleShape2D_rdx4y")
 
-[node name="PlayerCamera" type="Camera2D" parent="."]
+[node name="PlayerCamera" type="Camera2D" parent="." unique_id=1053328454]
 unique_name_in_owner = true
 zoom = Vector2(0.5, 0.5)
 position_smoothing_enabled = true
 position_smoothing_speed = 3.0
 
-[node name="PlayerSynchronizer" type="MultiplayerSynchronizer" parent="."]
+[node name="PlayerSynchronizer" type="MultiplayerSynchronizer" parent="." unique_id=1875480268]
 replication_config = SubResource("SceneReplicationConfig_rdx4y")
 
-[node name="Nametag" type="Label" parent="."]
+[node name="Nametag" type="Label" parent="." unique_id=1012836338]
 unique_name_in_owner = true
 anchors_preset = 7
 anchor_left = 0.5

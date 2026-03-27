@@ -14,31 +14,23 @@ const SETTINGS: Dictionary = {
 			"default_value": false,
 			"is_basic": true
 		},
+	},
+	"steam": {
+		"enable_steam": {
+			"type": TYPE_BOOL,
+			"default_value": false,
+			"is_basic": true
+		}
 	}
 }
 
 func _enter_tree() -> void:
-	var godotsteam_exists := DirAccess.dir_exists_absolute("res://addons/godotsteam/")
-
-	if godotsteam_exists:
-		# Registers autoloads
-		for autoload in AUTOLOADS:
-			add_autoload_singleton(autoload, AUTOLOADS[autoload])
-		_add_project_settings()
-	else:
-		var dialog := AcceptDialog.new()
-		dialog.title = "Missing Required Dependencies"
-		dialog.dialog_text = "You are missing the following dependencies required for this addon to function: \n"
-		if not godotsteam_exists:
-			dialog.dialog_text += "GodotSteam"
-		
-		# Disable the plugin when the user presses OK
-		dialog.confirmed.connect(
-			func():
-				EditorInterface.set_plugin_enabled(PLUGIN_NAME, false)
-		)
-
-		EditorInterface.popup_dialog_centered(dialog)
+	ProjectSettings.settings_changed.connect(_on_settings_changed)
+	
+	# Registers autoloads
+	for autoload in AUTOLOADS:
+		add_autoload_singleton(autoload, AUTOLOADS[autoload])
+	_add_project_settings()
 
 func _disable_plugin() -> void:
 	_remove_project_settings()
@@ -63,7 +55,6 @@ func _add_project_settings() -> void:
 			if not error == OK:
 				push_error("[EPMP] Error %s while saving project settings." % error_string(error))
 
-
 func _remove_project_settings() -> void:
 	for section : String in SETTINGS:
 		for setting : String in SETTINGS[section]:
@@ -74,3 +65,26 @@ func _remove_project_settings() -> void:
 			var error : int = ProjectSettings.save()
 			if not error == OK:
 				push_error("[EPMP] Error %s while saving project settings." % error_string(error))
+
+func check_for_steam() -> void:
+	if not ProjectSettings.get_setting("easy_peasy_multiplayer/steam/enable_steam", false): return
+	
+	var godotsteam_exists := DirAccess.dir_exists_absolute("res://addons/godotsteam/")
+
+	if not godotsteam_exists:
+		var dialog := AcceptDialog.new()
+		dialog.title = "Missing Required Dependencies"
+		dialog.dialog_text = "You are missing the following dependencies required for certain features of this addon to function: \n"
+		if not godotsteam_exists:
+			dialog.dialog_text += "GodotSteam"
+		
+		# Disable the plugin when the user presses OK
+		dialog.confirmed.connect(
+			func():
+				ProjectSettings.set_setting("easy_peasy_multiplayer/steam/enable_steam", false)
+		)
+
+		EditorInterface.popup_dialog_centered(dialog)
+
+func _on_settings_changed() -> void:
+	check_for_steam()
