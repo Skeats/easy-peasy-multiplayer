@@ -57,3 +57,4 @@ jump={
 initialization/app_id=480
 multiplayer_peer/max_channels=4
 initialization/initialize_on_startup=true
+initialization/embed_callbacks=false
