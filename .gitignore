@@ -16,3 +16,5 @@ mono_crash.*.json
 
 # Affinity Designer file ignores
 *.afdesign
+
+build/
